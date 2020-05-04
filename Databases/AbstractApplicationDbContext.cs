@@ -4,11 +4,11 @@ using Microsoft.Extensions.Options;
 
 namespace GenericCrud.Databases
 {
-    public class AbstractApplicationDbContext : DbContext, IApplicationDbContext
+    public abstract class AbstractApplicationDbContext : DbContext, IApplicationDbContext
     {
         private readonly IOptions<SqlOption> _sqlOption;
 
-        public AbstractApplicationDbContext(IOptions<SqlOption> sqlOption)
+        protected AbstractApplicationDbContext(IOptions<SqlOption> sqlOption)
         {
             _sqlOption = sqlOption;
         }
