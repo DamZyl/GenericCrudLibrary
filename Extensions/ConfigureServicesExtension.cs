@@ -51,6 +51,9 @@ namespace GenericCrud.Extensions
         public static IServiceCollection AddDb<TImpl>(this IServiceCollection services)
             => services.AddScoped(typeof(IApplicationDbContext), typeof(TImpl));
 
+        public static IServiceCollection AddDbInitializer<TInit>(this IServiceCollection services)
+            => services.AddScoped(typeof(TInit));
+
         public static IServiceCollection AddSwagger(this IServiceCollection services)
         {
             return services.AddSwaggerGen(x =>
