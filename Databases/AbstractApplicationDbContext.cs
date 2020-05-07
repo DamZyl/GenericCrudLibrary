@@ -6,6 +6,7 @@ namespace GenericCrud.Databases
 {
     public abstract class AbstractApplicationDbContext : DbContext, IApplicationDbContext
     {
+        public DbContext Instance => this;
         private readonly IOptions<SqlOption> _sqlOption;
 
         protected AbstractApplicationDbContext(IOptions<SqlOption> sqlOption)
