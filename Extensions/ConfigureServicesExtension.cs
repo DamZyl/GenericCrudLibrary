@@ -1,6 +1,9 @@
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using GenericCrud.Auth;
 using GenericCrud.Databases;
+using GenericCrud.Mappers;
 using GenericCrud.Options;
 using GenericCrud.Repositories;
 using Microsoft.AspNetCore.Authentication;
@@ -47,6 +50,20 @@ namespace GenericCrud.Extensions
 
         public static IServiceCollection AddRepository(this IServiceCollection services)
             => services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+        public static void AddMapper(this IServiceCollection services, Assembly assembly)
+        {
+            foreach (var type in assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract))
+            {
+                foreach (var i in type.GetInterfaces()
+                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapper<,>)))
+                {
+
+                    var interfaceType = typeof(IMapper<,>).MakeGenericType(i.GetGenericArguments());
+                    services.Add(new ServiceDescriptor(interfaceType, type, ServiceLifetime.Scoped));
+                }
+            }
+        }
 
         public static IServiceCollection AddDb<TImpl>(this IServiceCollection services)
             => services.AddScoped(typeof(IApplicationDbContext), typeof(TImpl));
