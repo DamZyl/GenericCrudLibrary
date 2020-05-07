@@ -7,8 +7,10 @@ namespace GenericCrud.Databases
 {
     public abstract class AbstractDatabaseInitializer
     {
-        protected readonly IApplicationDbContext _context;
-        protected readonly IPasswordHasher _passwordHasher;
+        private readonly IApplicationDbContext _context;
+        private readonly IPasswordHasher _passwordHasher;
+        
+        protected IPasswordHasher PasswordHasher => _passwordHasher;
 
         protected AbstractDatabaseInitializer(IApplicationDbContext context, IPasswordHasher passwordHasher)
         {
