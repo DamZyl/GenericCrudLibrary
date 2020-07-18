@@ -6,8 +6,8 @@ using GenericCrud.Databases;
 using GenericCrud.Mappers;
 using GenericCrud.Options;
 using GenericCrud.Repositories;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -17,19 +17,18 @@ namespace GenericCrud.Extensions
 {
     public static class ConfigureServicesExtension
     {
-        public static IServiceCollection AddSqlConfiguration(this IServiceCollection services, IConfiguration configuration, string section) 
+        public static void AddSqlConfiguration(this IServiceCollection services, IConfiguration configuration, string section) 
             => services.Configure<SqlOption>(x => configuration.GetSection(section).Bind(x));
         
-        public static IServiceCollection AddJwtConfiguration(this IServiceCollection services, IConfiguration configuration, string section)
-            => services.Configure<JwtOption>(x => configuration.GetSection(section).Bind(x));
-
-        public static AuthenticationBuilder AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration, string section)
+        public static void AddJwtConfiguration(this IServiceCollection services, IConfiguration configuration, string section)
         {
+            services.Configure<JwtOption>(x => configuration.GetSection(section).Bind(x));
+            
             var jwtOption = new JwtOption();
             var jwtSection = configuration.GetSection(section);
             jwtSection.Bind(jwtOption);
             
-            return services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(cfg =>
                 {
                     cfg.TokenValidationParameters = new TokenValidationParameters
@@ -42,15 +41,18 @@ namespace GenericCrud.Extensions
                 });
         }
         
-        public static IServiceCollection AddJwt(this IServiceCollection services)
+        public static void AddJwt(this IServiceCollection services)
             => services.AddScoped<IJwtHandler, JwtHandler>();
         
-        public static IServiceCollection AddHasher(this IServiceCollection services)
+        public static void AddHasher(this IServiceCollection services)
             => services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-        public static IServiceCollection AddRepository(this IServiceCollection services)
+        public static void AddRepository(this IServiceCollection services)
             => services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
+        public static void AddUnitOfWork(this IServiceCollection services)
+            => services.AddScoped<IUnitOfWork, UnitOfWork>();
+        
         public static void AddMapper(this IServiceCollection services, Assembly assembly)
         {
             foreach (var type in assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract))
@@ -64,16 +66,33 @@ namespace GenericCrud.Extensions
                 }
             }
         }
-
-        public static IServiceCollection AddDb<TImpl>(this IServiceCollection services)
-            => services.AddScoped(typeof(IApplicationDbContext), typeof(TImpl));
-
-        public static IServiceCollection AddDbInitializer<TInit>(this IServiceCollection services)
-            => services.AddScoped(typeof(TInit));
-
-        public static IServiceCollection AddSwagger(this IServiceCollection services)
+        
+        public static void AddMapperWithParams(this IServiceCollection services, Assembly assembly)
         {
-            return services.AddSwaggerGen(x =>
+            foreach (var type in assembly.GetTypes().Where(t => t.IsClass && !t.IsAbstract))
+            {
+                foreach (var i in type.GetInterfaces()
+                    .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IMapperWithParams<,>)))
+                {
+
+                    var interfaceType = typeof(IMapperWithParams<,>).MakeGenericType(i.GetGenericArguments());
+                    services.Add(new ServiceDescriptor(interfaceType, type, ServiceLifetime.Scoped));
+                }
+            }
+        }
+
+        public static void AddDatabase<TDb>(this IServiceCollection services) where TDb : DbContext
+        {
+            services.AddDbContext<TDb>();
+            services.AddScoped(typeof(IApplicationDbContext), typeof(TDb));
+        }
+        
+        public static void AddDbInitializer<TDbInit>(this IServiceCollection services)
+            => services.AddScoped(typeof(TDbInit));
+
+        public static void AddSwagger(this IServiceCollection services)
+        {
+            services.AddSwaggerGen(x =>
             {
                 x.SwaggerDoc("v1", new OpenApiInfo
                 {

@@ -2,8 +2,8 @@ using GenericCrud.Models;
 
 namespace GenericCrud.Mappers
 {
-    public abstract class AbstractMapper<TEntity, TDto> : IMapper<TEntity, TDto> where TEntity : IBaseEntity where TDto : IDto
+    public abstract class AbstractMapper<TEntity, TViewModel> : IMapper<TEntity, TViewModel> where TEntity : BaseEntity where TViewModel : ViewModel
     {
-        public abstract TDto MapObject(TEntity entity);
+        public abstract TViewModel MapObject(TEntity entity);
     }
 }

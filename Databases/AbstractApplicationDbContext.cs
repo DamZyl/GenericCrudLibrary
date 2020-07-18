@@ -1,3 +1,4 @@
+using System.Reflection;
 using GenericCrud.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -22,6 +23,11 @@ namespace GenericCrud.Databases
             }
 
             optionsBuilder.UseSqlServer(_sqlOption.Value.ConnectionString);
+        }
+        
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
     }
 }
